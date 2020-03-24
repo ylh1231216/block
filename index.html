@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打砖块</title>
+    <!-- <link rel="stylesheet" href="index.css"> -->
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: gray;
+        }
+        
+        #main {
+            margin: 10px auto;
+            width: 400px;
+            height: 600px;
+        }
+        
+        #head {
+            height: 100px;
+            background-color: burlywood;
+        }
+        
+        #con {
+            position: relative;
+            height: 500px;
+            background-color: blueviolet;
+            border: 1px solid black;
+            box-sizing: border-box;
+            background-image: url('bg.jpg');
+            background-size: 100% 100%;
+        }
+        
+        .start {
+            width: 80px;
+            height: 40px;
+            display: block;
+            box-sizing: border-box;
+            margin: 20px auto;
+            position: relative;
+            top: -300px;
+        }
+        
+        .starthide {
+            display: none;
+        }
+        
+        .startmoveleft {
+            top: -70px;
+            left: -40px;
+        }
+        
+        .startmoveright {
+            top: -130px;
+            left: 40px;
+        }
+        
+        .left {
+            position: absolute;
+            top: 430px;
+            left: 20px;
+            z-index: 11;
+            font-size: 30px;
+            color: red;
+            background-color: transparent;
+        }
+        
+        .right {
+            position: absolute;
+            top: 430px;
+            right: 20px;
+            z-index: 11;
+            font-size: 30px;
+            color: red;
+            background-color: transparent;
+        }
+        
+        .mytitle {
+            width: 250px;
+            margin: 40px auto;
+            color: yellow;
+            position: relative;
+            z-index: 11;
+            text-align: center;
+            font-size: 80px;
+        }
+        
+        .mytitle::after {
+            content: '打砖块';
+            position: absolute;
+            left: 0px;
+            width: 250px;
+            color: #12c2e9;
+            animation: sportlight infinite 3s;
+            z-index: 10;
+        }
+        
+        @keyframes sportlight {
+            0% {
+                clip-path: ellipse(20px 100px at -20% 0%);
+            }
+            50% {
+                clip-path: ellipse(20px 100px at 120% 100%);
+            }
+            100% {
+                clip-path: ellipse(20px 100px at -20% 0%);
+            }
+        }
+        
+        .plane {
+            position: absolute;
+            z-index: 10;
+            background-color: lightseagreen;
+        }
+        
+        .ball {
+            position: absolute;
+            z-index: 10;
+            /* width: 10px;
+            height: 10px; */
+            background-color: red;
+            bottom: 20px;
+            left: 195px;
+        }
+        
+        #block {
+            margin: 0 auto;
+            width: 360px;
+            height: 300px;
+            /* background-color: pink; */
+            box-sizing: border-box;
+            padding: 30px 10px;
+        }
+        
+        .blockitem {
+            display: inline-block;
+            margin-top: 10px;
+            position: absolute;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="main">
+        <div id="head">
+            <h2>得分：<span class="score">0</span></h2>
+        </div>
+        <div id="con">
+            <h2 class="mytitle">打砖块</h2>
+            <!-- <button class="start left" onclick="moveleft()">
+                <<
+            </button>
+            <button class="start right" onclick="moveright()">
+                >>
+            </button> -->
+        </div>
+        <!-- <button class="start" onclick="start()">
+            开始游戏
+        </button>
+        <button class="start" onclick="shot()">
+            发射弹球
+        </button>
+        <button class="start" onclick="reset()">
+            重新开始
+        </button> -->
+    </div>
+    <!-- <div id='item1' style="width: 200px;height: 200px;background-color: red;left:200px;bottom:500px;position:absolute; ">item1</div>
+    <div id='item2' style="width: 100px;height: 100px;background-color: pink;left:400px;bottom:400px;position: absolute; ">item2</div> -->
+
+    <script>
+        var gamestatus = false;
+        var ballstatus = true;
+        var blockitemcount = 105;
+        var ballspeed = 1;
+        var balldirection = 1;
+        var scorecount = 0;
+
+        window.onload = function() {
+                var startbutton = document.createElement('button')
+                startbutton.className = 'start'
+                startbutton.onclick = start
+                startbutton.innerText = '开始游戏'
+                document.body.appendChild(startbutton)
+                var shotbutton = document.createElement('button')
+                var resetbutton = document.createElement('button')
+                shotbutton.className = 'start'
+                resetbutton.className = 'start'
+                shotbutton.onclick = shot
+                resetbutton.onclick = reset
+                shotbutton.innerText = '发射弹球'
+                resetbutton.innerText = '重新开始'
+                shotbutton.style.display = 'none'
+                resetbutton.style.display = 'none'
+                document.body.appendChild(shotbutton)
+                document.body.appendChild(resetbutton)
+            }
+            // 开始游戏
+        function start() {
+            if (!gamestatus) {
+                init();
+            }
+        }
+        //重新开始
+        function reset() {
+            if (gamestatus) {
+                clearInterval(it)
+                while (con.firstChild) {
+                    con.removeChild(con.firstChild)
+                }
+                gamestatus = false
+                ballstatus = true
+                balldirection = 1
+                scorecount = 0
+                ballspeed = 1
+                getscore()
+                start()
+            }
+        }
+        // 游戏初始化，生成小球及砖块
+        function init() {
+            gamestatus = true
+            var con = document.getElementById('con')
+            var leftbutton = document.createElement('button')
+            var rightbutton = document.createElement('button')
+            leftbutton.className = 'start left'
+            rightbutton.className = 'start right'
+            leftbutton.innerText = '<<'
+            rightbutton.innerText = '>>'
+            leftbutton.onclick = moveleft
+            rightbutton.onclick = moveright
+            leftbutton.onmousedown = () => {
+                ml = setInterval('moveleft()', 100)
+            }
+            leftbutton.onmouseup = () => {
+                clearInterval(ml)
+            }
+            rightbutton.onmousedown = () => {
+                mr = setInterval('moveright()', 100)
+            }
+            rightbutton.onmouseup = () => {
+                clearInterval(mr)
+            }
+            con.appendChild(leftbutton)
+            con.appendChild(rightbutton)
+
+
+
+
+            var getbutton = document.getElementsByClassName('start')
+            getbutton[2].className = 'start starthide'
+            getbutton[3].className = 'start startmoveleft'
+            getbutton[3].style.display = 'block'
+            getbutton[4].className = 'start startmoveright'
+            getbutton[4].style.display = 'block'
+            if (document.getElementsByClassName('mytitle')[0]) {
+                document.getElementsByClassName('mytitle')[0].style.display = 'none'
+            }
+
+
+            var plane = document.createElement('div')
+            plane.className = 'plane'
+            plane.style.width = '80px'
+            plane.style.height = '10px'
+            plane.style.bottom = '50px'
+            plane.style.left = '160px'
+            con.appendChild(plane)
+            plane = ''
+            var block = document.createElement('div')
+            block.className = 'block'
+            con.appendChild(block)
+            block = ''
+
+            var block = document.getElementsByClassName('block')[0]
+            var ball = document.createElement('span')
+            ball.className = 'ball'
+            ball.style.bottom = '60px'
+            ball.style.left = '195px'
+            ball.style.width = '10px'
+            ball.style.height = '10px'
+            con.appendChild(ball)
+            ball = ''
+
+            fromleft = 60
+            frombottom = 400
+            for (let i = 0; i < blockitemcount; i++) {
+                if (i % 15 == 0 && i > 0) {
+                    frombottom -= 20
+                    fromleft = 60
+                }
+                let blockitem = document.createElement('span')
+                blockitem.className = 'blockitem'
+                blockitem.status = 1
+                blockitem.style.backgroundColor = randomcolor()
+                blockitem.style.width = '20px'
+                blockitem.style.height = '20px'
+                blockitem.style.left = fromleft + 'px'
+                blockitem.style.bottom = frombottom + 'px'
+                fromleft += 20
+                block.appendChild(blockitem)
+            }
+            document.onkeydown = function(e) {
+                if (e.keyCode == 37) {
+                    moveleft()
+                } else if (e.keyCode == 39) {
+                    moveright()
+                }
+            }
+        }
+        // 随机颜色
+        var precolor = ''
+
+        function randomcolor() {
+            color = ['red', 'orange', 'yellow', 'green', 'blue', 'purple']
+            let radnum = Math.ceil(Math.random() * color.length)
+                // console.log(radnum)
+            if (color[radnum - 1] !== precolor) {
+                // console.log(precolor)
+                precolor = color[radnum - 1]
+                    // console.log(precolor)
+                return precolor
+            } else {
+                precolor = ''
+                return 'pink'
+            }
+        }
+        // 发射弹球
+        function shot() {
+            if (ballstatus && gamestatus) {
+                it = setInterval('game()', 10)
+            }
+            ballstatus = false
+        }
+        //板子移动
+        function moveleft() {
+            let plane = document.getElementsByClassName('plane')[0]
+            if (parseInt(plane.style.left) > 0) {
+                plane.style.left = parseInt(plane.style.left) - 10 + 'px'
+                if (ballstatus == true) {
+                    let ball = document.getElementsByClassName('ball')[0]
+                    ball.style.left = parseInt(ball.style.left) - 10 + 'px'
+                }
+            }
+        }
+
+        function moveright() {
+            let plane = document.getElementsByClassName('plane')[0]
+            if (parseInt(plane.style.left) < 320) {
+                plane.style.left = parseInt(plane.style.left) + 10 + 'px'
+                if (ballstatus == true) {
+                    let ball = document.getElementsByClassName('ball')[0]
+                    ball.style.left = parseInt(ball.style.left) + 10 + 'px'
+                }
+            }
+        }
+
+        // 小球碰撞监测
+        function ballmove() {
+            var ball = document.getElementsByClassName('ball')[0]
+            var items = document.getElementsByClassName('blockitem')
+            var block = document.getElementsByClassName('block')[0]
+            var plane = document.getElementsByClassName('plane')[0]
+                // 边界碰撞
+            ball.style.bottom = (parseInt(ball.style.bottom) + ballspeed) + 'px'
+            ball.style.left = (parseInt(ball.style.left) + Math.abs(ballspeed) * balldirection) + 'px'
+            if (parseInt(ball.style.left) <= 0) {
+                balldirection = 1
+            }
+            if (parseInt(ball.style.left) >= 390) {
+                balldirection = -1
+            }
+            if (parseInt(ball.style.bottom) >= 490) {
+                ballspeed = -ballspeed
+            }
+            if (parseInt(ball.style.bottom) <= 0) {
+                alert('游戏结束')
+                reset()
+            }
+
+
+            // 砖块碰撞
+            var j = true
+            for (let i = 0; i < items.length; i++) {
+                var iscollide = collide(ball, items[i])
+                if (iscollide[0]) {
+                    block.removeChild(items[i])
+                    scorecount = scorecount + 1
+                    getscore()
+                }
+                if (iscollide[1] == 'x' && j) {
+                    balldirection = -balldirection
+                    j = false
+                } else if (iscollide[1] == 'y' && j) {
+                    ballspeed = -ballspeed
+                    j = false
+                } else if (iscollide[1] == 'xy' && j) {
+                    balldirection = -balldirection
+                    ballspeed = -ballspeed
+                    j = false
+                }
+            }
+
+            // 板子碰撞
+            let iscollide2 = collide(ball, plane)
+            if (iscollide2[0]) {
+                if (iscollide2[1] == 'x') {
+                    alert('游戏结束')
+                    reset()
+                } else if (iscollide2[1] == 'y') {
+                    ballspeed = -ballspeed
+                } else if (iscollide2[1] == 'xy') {
+                    balldirection = -balldirection
+                    ballspeed = -ballspeed
+                }
+            }
+
+        }
+        // 游戏监测
+        function game() {
+            ballmove()
+        }
+
+
+
+        //碰撞监测函数
+        function collide(item1, item2) {
+            var x1 = parseInt(item1.style.left) + 1 / 2 * parseInt(item1.style.width)
+            var y1 = parseInt(item1.style.bottom) + 1 / 2 * parseInt(item1.style.height)
+            var x2 = parseInt(item2.style.left) + 1 / 2 * parseInt(item2.style.width)
+            var y2 = parseInt(item2.style.bottom) + 1 / 2 * parseInt(item2.style.height)
+            var x = Math.abs(x1 - x2)
+            var y = Math.abs(y1 - y2)
+            var minx = 1 / 2 * (parseInt(item1.style.width) + parseInt(item2.style.width))
+            var miny = 1 / 2 * (parseInt(item1.style.height) + parseInt(item2.style.height))
+            if (x == minx && y == miny) {
+                return [true, 'xy']
+            } else if (x < minx && y == miny) {
+                return [true, 'y']
+            } else if (x == minx && y < miny) {
+                return [true, 'x']
+
+            } else {
+                return [false, '']
+
+            }
+        }
+        //得分函数
+        function getscore() {
+            let score = document.getElementsByClassName('score')[0]
+            score.innerHTML = scorecount
+            if (scorecount == blockitemcount) {
+                alert('you win')
+                reset();
+            }
+        }
+    </script>
+</body>
+
+</html>
